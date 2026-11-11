@@ -74,17 +74,20 @@ def publicar(cola: str, datos: dict) -> None:
 
 
 def al_recibir_evento(canal, metodo, propiedades, cuerpo):
-    evento = json.loads(cuerpo)
-    with lock:
-        if evento["tipo"] == "repartidor":
-            repartidores[evento["nombre"]] = Repartidor(
-                nombre=evento["nombre"], x=evento["x"], y=evento["y"], estado=evento["estado"]
-            )
-            ultimo_aviso[evento["nombre"]] = time.time()
-        elif evento["id"] in pedidos:  # si la API se reinició puede llegar un pedido viejo: se ignora
-            pedido = pedidos[evento["id"]]
-            pedido.estado = evento["estado"]
-            pedido.repartidor = evento["repartidor"]
+    try:
+        evento = json.loads(cuerpo)
+        with lock:
+            if evento["tipo"] == "repartidor":
+                repartidores[evento["nombre"]] = Repartidor(
+                    nombre=evento["nombre"], x=evento["x"], y=evento["y"], estado=evento["estado"]
+                )
+                ultimo_aviso[evento["nombre"]] = time.time()
+            elif evento["id"] in pedidos:  # si la API se reinició puede llegar un pedido viejo: se ignora
+                pedido = pedidos[evento["id"]]
+                pedido.estado = evento["estado"]
+                pedido.repartidor = evento["repartidor"]
+    except Exception:  # un mensaje roto no debe matar al hilo que escucha
+        print(f"Evento inválido ignorado: {cuerpo!r}")
 
 
 def escuchar_eventos() -> None:

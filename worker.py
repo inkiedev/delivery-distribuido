@@ -59,7 +59,7 @@ def repartir(nombre: str) -> None:
             continue
 
         p = json.loads(cuerpo)
-        print(f"[{nombre}] tomó el pedido #{p['id']} ({p['restaurante']} → {p['x']},{p['y']})")
+        print(f"[{nombre}] tomó el pedido #{p['id']} ({p['restaurante']} -> {p['x']},{p['y']})")
         avisar(canal, {"tipo": "pedido", "id": p["id"], "estado": "RECOGIENDO", "repartidor": nombre})
         pos = caminar(conexion, canal, nombre, pos, (p["rx"], p["ry"]), "RECOGIENDO")
         avisar(canal, {"tipo": "pedido", "id": p["id"], "estado": "EN_CAMINO", "repartidor": nombre})

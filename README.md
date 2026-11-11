@@ -34,7 +34,7 @@ La ciudad es una cuadrícula de calles de 0 a 8; los repartidores avanzan una cu
 ## Requisitos previos
 
 - Docker (para RabbitMQ)
-- Python 3.10 o más nuevo
+- Python 3.11 o más nuevo
 
 ## Cómo correrlo
 
