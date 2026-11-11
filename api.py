@@ -8,6 +8,7 @@ Correr con:  uvicorn api:app --port 8000
 """
 import json
 import os
+import random
 import threading
 import time
 from typing import Optional
@@ -55,6 +56,7 @@ class Pedido:
 
 pedidos: dict[int, Pedido] = {}
 repartidores: dict[str, Repartidor] = {}
+ultimo_aviso: dict[str, float] = {}  # nombre -> hora del último evento de ese repartidor
 lock = threading.Lock()
 
 
@@ -78,6 +80,7 @@ def al_recibir_evento(canal, metodo, propiedades, cuerpo):
             repartidores[evento["nombre"]] = Repartidor(
                 nombre=evento["nombre"], x=evento["x"], y=evento["y"], estado=evento["estado"]
             )
+            ultimo_aviso[evento["nombre"]] = time.time()
         elif evento["id"] in pedidos:  # si la API se reinició puede llegar un pedido viejo: se ignora
             pedido = pedidos[evento["id"]]
             pedido.estado = evento["estado"]
@@ -109,13 +112,14 @@ class Query:
 
     @strawberry.field
     def repartidores(self) -> list[Repartidor]:
+        # Solo los que avisaron en los últimos 10 s (si su worker murió, desaparecen)
         with lock:
-            return list(repartidores.values())
+            return [r for r in repartidores.values() if time.time() - ultimo_aviso[r.nombre] < 10]
 
     @strawberry.field
     def pedidos(self) -> list[Pedido]:
         with lock:
-            return sorted(pedidos.values(), key=lambda p: p.id, reverse=True)
+            return list(reversed(pedidos.values()))  # el más nuevo primero
 
 
 @strawberry.type
@@ -134,7 +138,12 @@ class Mutation:
         # Publicar y guardar dentro del lock: así el hilo de eventos nunca recibe
         # noticias de un pedido que todavía no está guardado.
         with lock:
-            pedido = Pedido(id=len(pedidos) + 1, cliente=cliente, restaurante=restaurante,
+            # Número de pedido al azar (como en las apps reales). No se usa 1, 2, 3... porque
+            # si la API se reinicia volverían a empezar y se mezclarían con pedidos viejos en curso.
+            numero = random.randint(1000, 9999)
+            while numero in pedidos:
+                numero = random.randint(1000, 9999)
+            pedido = Pedido(id=numero, cliente=cliente, restaurante=restaurante,
                             x=x, y=y, estado="EN_COLA")
             try:
                 publicar("pedidos", {"id": pedido.id, "cliente": cliente, "restaurante": restaurante,
