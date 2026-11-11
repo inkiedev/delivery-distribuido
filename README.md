@@ -42,7 +42,7 @@ La ciudad es una cuadrícula de calles de 0 a 8; los repartidores avanzan una cu
 
 ```bash
 docker compose up -d
-python3 -m venv .venv
+python3 -m venv .venv            # en Windows: python -m venv .venv
 source .venv/bin/activate        # en Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 uvicorn api:app --port 8000
@@ -54,6 +54,9 @@ uvicorn api:app --port 8000
 source .venv/bin/activate        # en Windows: .venv\Scripts\activate
 python worker.py Ana Luis Sofi
 ```
+
+> **Windows con PowerShell:** si `activate` da un error de "ejecución de scripts deshabilitada", corre
+> una vez `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned` y vuelve a intentar.
 
 ## Demo paso a paso
 
@@ -97,6 +100,10 @@ RABBIT_URL=amqp://delivery:delivery@192.168.1.10 python worker.py Pedro
 ```
 
 En Windows (PowerShell): `$env:RABBIT_URL="amqp://delivery:delivery@192.168.1.10"; python worker.py Pedro`
+
+**Cada worker debe usar nombres distintos.** La API identifica a los repartidores por su nombre: si
+dos PCs corren `python worker.py` sin nombres, las dos usan Ana, Luis y Sofi, y en el mapa se mezclan
+(se ven 3 repartidores saltando en vez de 6).
 
 ## Cómo funciona por dentro
 
