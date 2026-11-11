@@ -1,0 +1,9 @@
+services:
+  rabbitmq:
+    image: rabbitmq:4-management
+    ports:
+      - "5672:5672"     # conexiones de la API y los workers
+      - "15672:15672"   # panel web: http://localhost:15672
+    environment:
+      RABBITMQ_DEFAULT_USER: delivery
+      RABBITMQ_DEFAULT_PASS: delivery
